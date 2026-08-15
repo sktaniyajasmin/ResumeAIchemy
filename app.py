@@ -3,30 +3,33 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel
 
-# 1. Page Configuration
+# 1. Configuration of the Web Dashboard
 st.set_page_config(page_title="ResumeAlchemy", layout="centered", page_icon="📝")
 st.title("📝 ResumeAlchemy")
 st.subheader("Transform raw resumes into clean, structured data using AI")
 
-# 2. Direct API Key Input on the Main Page
-api_key = st.text_input(
-    "🔑 Enter your Google Gemini API Key:",
+# 2. Left Collapsible Sidebar Controls
+st.sidebar.header("⚙️ Settings & Authentication")
+
+api_key = st.sidebar.text_input(
+    "Enter Google Gemini API Key", 
     type="password",
-    placeholder="AIzaSy...",
     help="Get a free key from https://aistudio.google.com/apikey"
 )
 
+# Block main screen until key is entered
 if not api_key:
-    st.info("Please enter your Google Gemini API Key above to unlock the resume scanner.")
+    st.info("👈 Please open the sidebar and enter your Google Gemini API key to begin.", icon="🔑")
     st.stop()
 
-# 3. Client & Model Setup
+# Initialize Gemini client with user key
 try:
     client = genai.Client(api_key=api_key)
 except Exception as e:
-    st.error(f"Invalid API Key configuration: {e}")
+    st.sidebar.error(f"Invalid API Key: {e}")
     st.stop()
 
+# Dynamic Model Selection inside the Sidebar
 try:
     raw_models = client.models.list()
     model_options = [
@@ -38,9 +41,9 @@ try:
 except Exception:
     model_options = ["models/gemini-2.5-flash", "models/gemini-2.0-flash"]
 
-selected_model = st.selectbox("Choose AI Model", model_options)
+selected_model = st.sidebar.selectbox("Choose AI Model", model_options)
 
-# 4. Resume File Uploader
+# 3. Main Screen: Interactive File Upload UI
 uploaded_file = st.file_uploader("Upload a candidate's resume (PDF format)", type=["pdf"])
 
 if uploaded_file is not None:
@@ -53,7 +56,7 @@ if uploaded_file is not None:
         )
         st.success("File uploaded successfully! Sending to AI Engine...")
 
-    # 5. Output Blueprint Schema
+    # 4. JSON Output Schema Definition
     class ContactInfo(BaseModel):
         email: str
         phone: str
@@ -74,7 +77,7 @@ if uploaded_file is not None:
 
     with st.spinner(f"AI is scanning the PDF using {selected_model}..."):
         try:
-            # 6. Execute Multimodal Extraction Request
+            # 5. Multimodal Extraction Call
             response = client.models.generate_content(
                 model=selected_model,
                 contents=[
@@ -88,7 +91,7 @@ if uploaded_file is not None:
                 ),
             )
 
-            # 7. Render Organized Results
+            # 6. Render Results Dashboard
             st.balloons()
             st.header("⚡ Parsed Candidate Profile")
             st.json(response.text)
