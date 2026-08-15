@@ -4,15 +4,31 @@ from google.genai import types
 from pydantic import BaseModel
 
 # 1. Configuration of the Web Dashboard
-st.set_page_config(page_title="ResumeAIchemy", layout="centered", page_icon="📝")
-st.title("📝 ResumeAIchemy")
+st.set_page_config(page_title="ResumeAlchemy", layout="centered", page_icon="📝")
+st.title("📝 ResumeAlchemy")
 st.subheader("Transform raw resumes into clean, structured data using AI")
 
-# 2. Load API Key from Streamlit Secrets
-api_key = st.secrets["GEMINI_API_KEY"]
-client = genai.Client(api_key=api_key)
+# 2. Bring Your Own Key (BYOK) Sidebar
+st.sidebar.header("🔑 Access Control")
+api_key = st.sidebar.text_input(
+    "Enter your Gemini API Key", 
+    type="password",
+    help="Get a free API key at https://aistudio.google.com/apikey"
+)
 
-# Automatically fetch all available models for your specific account
+# Halt execution until the user supplies an API key
+if not api_key:
+    st.info("👈 Please enter your Gemini API key in the left sidebar to get started.", icon="🔑")
+    st.stop()
+
+# Initialize Gemini client with the entered key
+try:
+    client = genai.Client(api_key=api_key)
+except Exception as e:
+    st.sidebar.error(f"Failed to configure API key: {e}")
+    st.stop()
+
+# Dynamically fetch available models
 try:
     raw_models = client.models.list()
     model_options = [
@@ -20,7 +36,7 @@ try:
         if "generateContent" in (getattr(m, "supported_generation_methods", None) or getattr(m, "supported_actions", None) or ["generateContent"])
     ]
     if not model_options:
-        model_options = [m.name for m in raw_models]
+        model_options = ["models/gemini-2.5-flash", "models/gemini-2.0-flash"]
 except Exception:
     model_options = ["models/gemini-2.5-flash", "models/gemini-2.0-flash"]
 
