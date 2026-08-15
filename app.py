@@ -4,18 +4,13 @@ from google.genai import types
 from pydantic import BaseModel
 
 # 1. Configuration of the Web Dashboard
-st.set_page_config(page_title="ResumeAIchemy", layout="centered", page_icon="📝")
+st.set_page_config(page_title="ResumeAIchgemy", layout="centered", page_icon="📝")
 st.title("📝 ResumeAIchemy")
 st.subheader("Transform raw resumes into clean, structured data using AI")
 
-# 2. Secure API Key Masked Input Sidebar
-api_key = st.sidebar.text_input("Enter Google Gemini API Key", type="password")
-
-if not api_key:
-    st.info("Please enter your Google Gemini API Key in the sidebar to begin.", icon="🔑")
-else:
-    client = genai.Client(api_key=api_key)
-
+# 2. Load API Key from Secrets
+api_key = st.secrets["GEMINI_API_KEY"]
+client = genai.Client(api_key=api_key)
     # Automatically fetch all available models for your specific account
     try:
         raw_models = client.models.list()
